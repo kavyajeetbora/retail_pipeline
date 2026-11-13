@@ -1,0 +1,43 @@
+resources:
+  jobs:
+    retail_pipeline:
+      name: retail_pipeline
+      tasks:
+        - task_key: ingest_data_from_landing
+          for_each_task:
+            inputs: '[  {"table": "customers", "source_path":
+              "/Volumes/retail/bronze/landing/customers/", "watermark_column":
+              "file_modification_time"},  {"table": "orders",    "source_path":
+              "/Volumes/retail/bronze/landing/transaction/",    "watermark_column":
+              "file_modification_time"}]'
+            task:
+              task_key: ingest_data_from_landing_iteration
+              notebook_task:
+                notebook_path: /Workspace/Users/utpala.bora18@gmail.com/retail/notebooks/01_landing_to_bronze
+                base_parameters:
+                  catalog: retail
+                  schema: bronze
+                  table: "{{input.table}}"
+                  run_id: "{{job.run_id}}"
+                  watermark_column: "{{input.watermark_column}}"
+                  source_path: "{{input.source_path}}"
+                source: WORKSPACE
+              min_retry_interval_millis: 900000
+              disable_auto_optimization: true
+        - task_key: silver_customers
+          depends_on:
+            - task_key: ingest_data_from_landing
+          notebook_task:
+            notebook_path: /Workspace/Users/utpala.bora18@gmail.com/retail/notebooks/02_bronze_to_silver_customers
+            base_parameters:
+              run_id: "{{job.run_id}}"
+              catalog: retail
+              schema: silver
+              table: customers
+              watermark_column: _ingested_at
+            source: WORKSPACE
+          min_retry_interval_millis: 900000
+          disable_auto_optimization: true
+      queue:
+        enabled: true
+      performance_target: PERFORMANCE_OPTIMIZED
