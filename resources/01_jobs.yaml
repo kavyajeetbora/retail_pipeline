@@ -13,7 +13,7 @@ resources:
             task:
               task_key: ingest_data_from_landing_iteration
               notebook_task:
-                notebook_path: /Workspace/Users/utpala.bora18@gmail.com/retail/notebooks/01_landing_to_bronze
+                notebook_path: /Workspace/Users/utpala.bora18@gmail.com/retail_pipeline/notebooks/01_landing_to_bronze
                 base_parameters:
                   catalog: retail
                   schema: bronze
@@ -28,13 +28,26 @@ resources:
           depends_on:
             - task_key: ingest_data_from_landing
           notebook_task:
-            notebook_path: /Workspace/Users/utpala.bora18@gmail.com/retail/notebooks/02_bronze_to_silver_customers
+            notebook_path: /Workspace/Users/utpala.bora18@gmail.com/retail_pipeline/notebooks/02_silver_customers
             base_parameters:
               run_id: "{{job.run_id}}"
               catalog: retail
               schema: silver
               table: customers
               watermark_column: _ingested_at
+            source: WORKSPACE
+          min_retry_interval_millis: 900000
+          disable_auto_optimization: true
+        - task_key: silver_orders
+          depends_on:
+            - task_key: ingest_data_from_landing
+          notebook_task:
+            notebook_path: /Workspace/Users/utpala.bora18@gmail.com/retail_pipeline/notebooks/03_silver_transactions
+            base_parameters:
+              catalog: retail
+              schema: silver
+              table: orders
+              run_id: "{{job.run_id}}"
             source: WORKSPACE
           min_retry_interval_millis: 900000
           disable_auto_optimization: true
