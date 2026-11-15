@@ -13,7 +13,7 @@ resources:
             task:
               task_key: ingest_data_from_landing_iteration
               notebook_task:
-                notebook_path: /Workspace/Users/utpala.bora18@gmail.com/retail_pipeline/notebooks/01_landing_to_bronze
+                notebook_path: /Workspace/Users/kavyajeetbora@gmail.com/retail_pipeline/notebooks/01_landing_to_bronze
                 base_parameters:
                   catalog: retail
                   schema: bronze
@@ -28,7 +28,7 @@ resources:
           depends_on:
             - task_key: ingest_data_from_landing
           notebook_task:
-            notebook_path: /Workspace/Users/utpala.bora18@gmail.com/retail_pipeline/notebooks/02_silver_customers
+            notebook_path: /Workspace/Users/kavyajeetbora@gmail.com/retail_pipeline/notebooks/02_silver_customers
             base_parameters:
               run_id: "{{job.run_id}}"
               catalog: retail
@@ -38,15 +38,69 @@ resources:
             source: WORKSPACE
           min_retry_interval_millis: 900000
           disable_auto_optimization: true
+        - task_key: gold_dim_customer
+          depends_on:
+            - task_key: silver_customers
+          notebook_task:
+            notebook_path: /Workspace/Users/kavyajeetbora@gmail.com/retail_pipeline/notebooks/04_gold_dim_customer
+            base_parameters:
+              catalog: retail
+              schema: gold
+              table: dim_customer
+              run_id: "{{job.run_id}}"
+            source: WORKSPACE
+          min_retry_interval_millis: 900000
+          disable_auto_optimization: true
         - task_key: silver_orders
           depends_on:
             - task_key: ingest_data_from_landing
           notebook_task:
-            notebook_path: /Workspace/Users/utpala.bora18@gmail.com/retail_pipeline/notebooks/03_silver_transactions
+            notebook_path: /Workspace/Users/kavyajeetbora@gmail.com/retail_pipeline/notebooks/03_silver_transactions
             base_parameters:
               catalog: retail
               schema: silver
               table: orders
+              run_id: "{{job.run_id}}"
+            source: WORKSPACE
+          min_retry_interval_millis: 900000
+          disable_auto_optimization: true
+        - task_key: gold_fact_orders
+          depends_on:
+            - task_key: silver_orders
+          notebook_task:
+            notebook_path: /Workspace/Users/kavyajeetbora@gmail.com/retail_pipeline/notebooks/05_fact_orders
+            base_parameters:
+              catalog: retail
+              schema: gold
+              table: fact_orders
+              run_id: "{{job.run_id}}"
+            source: WORKSPACE
+          min_retry_interval_millis: 900000
+          disable_auto_optimization: true
+        - task_key: gold_daily_agg_sales
+          depends_on:
+            - task_key: gold_dim_customer
+            - task_key: gold_fact_orders
+          notebook_task:
+            notebook_path: /Workspace/Users/kavyajeetbora@gmail.com/retail_pipeline/notebooks/06_daily_agg_sales
+            base_parameters:
+              catalog: retail
+              schema: gold
+              table: daily_sales
+              run_id: "{{job.run_id}}"
+            source: WORKSPACE
+          min_retry_interval_millis: 900000
+          disable_auto_optimization: true
+        - task_key: gold_customer_summary
+          depends_on:
+            - task_key: gold_fact_orders
+            - task_key: gold_dim_customer
+          notebook_task:
+            notebook_path: /Workspace/Users/kavyajeetbora@gmail.com/retail_pipeline/notebooks/07_customer_summary
+            base_parameters:
+              catalog: retail
+              schema: gold
+              table: customer_summary
               run_id: "{{job.run_id}}"
             source: WORKSPACE
           min_retry_interval_millis: 900000
