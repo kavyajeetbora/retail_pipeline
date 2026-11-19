@@ -27,7 +27,13 @@ def orders_transform():
 
 
 ## 2. Create the silver table
-dp.create_streaming_table(TARGET_TABLE_NAME)
+dp.create_streaming_table(
+    name = TARGET_TABLE_NAME,
+    table_properties = {
+        'quality': 'silver',
+        'delta.enableChangeDataFeed': 'true'
+    }    
+)
 
 ## Incrementally ingest the data from bronze to the table
 dp.create_auto_cdc_flow(
@@ -35,8 +41,7 @@ dp.create_auto_cdc_flow(
     source = 'orders_transformed',
     keys = ['txn_id'],
     sequence_by = F.struct('_bronze_ingested_at', '_file_modification_time'), 
-    track_history_column_list = ['txn_id', 'customer_id', 'txn_ts', 'amount', 'currency', 'payment_method', 'status'],
-    stored_as_scd_type=2
+    stored_as_scd_type=1
 )
 
  

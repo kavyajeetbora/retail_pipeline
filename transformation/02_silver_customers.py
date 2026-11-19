@@ -7,7 +7,6 @@ SOURCE_SCHEMA = 'bronze'
 TARGET_SCHEMA = 'silver'
 TABLE_NAME = 'customer_sdp'
 
-
 @dp.temporary_view(name='customer_clean')
 @dp.expect_or_drop('valid_customer_id', "customer_id IS NOT NULL and customer_id <> ''")
 @dp.expect_or_drop('valid_updated_at', "updated_at IS NOT NULL")
@@ -26,7 +25,13 @@ def silver_customers():
 
 ## Create the empty table in silver
 target_table_name = f'{CATALOG}.{TARGET_SCHEMA}.{TABLE_NAME}'
-dp.create_streaming_table(target_table_name)
+dp.create_streaming_table(
+    name = target_table_name, 
+    table_properties = {
+        'quality': 'silver',
+        'delta.enableChangeDataFeed': 'true'
+    }
+)
 
 ## Ingest the data from bronze
 dp.create_auto_cdc_flow(

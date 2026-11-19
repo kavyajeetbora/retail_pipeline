@@ -11,7 +11,7 @@ def calculate_monthly_sales():
     return (
         spark.read.table(f'{CATALOG}.{source_schema}.{source_table}').alias('t')
         .join(
-            spark.read.table(f'{CATALOG}.{source_schema}.customer_sdp').alias('c'),
+            spark.read.table(f'{CATALOG}.{source_schema}.customer_sdp').filter(F.col('__END_AT').isNull()).alias('c'),
             F.col('t.customer_id') == F.col("c.customer_id"),
             'inner'
         )

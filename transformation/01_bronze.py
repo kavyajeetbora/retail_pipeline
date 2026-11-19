@@ -9,7 +9,7 @@ sources = {
 }
 
 def create_bronze_table(table_name, source_path):
-    @dp.table(name=table_name, table_properties = {'quality':'bronze'})
+    @dp.table(name=table_name, table_properties = {'quality':'bronze', 'pipeline.reset.allowed': 'false'})
     def bronze_customers():
         return (
             spark.readStream.format('cloudFiles')
