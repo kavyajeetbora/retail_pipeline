@@ -1,26 +1,19 @@
 from pyspark.sql import functions as F
 from pyspark import pipelines as dp
+from src.retail.transformation import clean_customers
+from src.retail.dq_rules import ORDER_DROP_RULES, ORDER_WARN_RULES, CUSTOMER_DROP_RULES, CUSTOMER_WARN_RULES
 
-
-CATALOG = spark.conf.get('catalog', 'retail')
+CATALOG = spark.conf.get('catalog')
 SOURCE_SCHEMA = 'bronze'
 TARGET_SCHEMA = 'silver'
 TABLE_NAME = 'customer_sdp'
 
 @dp.temporary_view(name='customer_clean')
-@dp.expect_or_drop('valid_customer_id', "customer_id IS NOT NULL and customer_id <> ''")
-@dp.expect_or_drop('valid_updated_at', "updated_at IS NOT NULL")
-@dp.expect('valid_segment', 'segment is NOT NULL')
+@dp.expect_all_or_drop(CUSTOMER_DROP_RULES)
+@dp.expect_all(CUSTOMER_WARN_RULES)
 def silver_customers():
     return (
-        spark.readStream.table(f'{CATALOG}.{SOURCE_SCHEMA}.{TABLE_NAME}')
-        .withColumn('first_name', F.initcap(F.trim('first_name')))
-        .withColumn('last_name',  F.initcap(F.trim('last_name')))
-        .withColumn('email', F.lower(F.trim('email')))
-        .withColumn('city', F.initcap(F.trim('city')))
-        .withColumn('segment', F.initcap(F.trim('segment')))
-        .withColumn('updated_at', F.try_to_timestamp('updated_at', F.lit('yyyy-MM-dd HH:mm:ss')))
-        .withColumn('_silver_updated_at', F.current_timestamp())
+        clean_customers(spark.readStream.table(f'{CATALOG}.{SOURCE_SCHEMA}.{TABLE_NAME}'))
     )
 
 ## Create the empty table in silver

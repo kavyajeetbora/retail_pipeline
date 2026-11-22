@@ -1,0 +1,21 @@
+resources:
+  pipelines:
+    pipeline_sdp_retail_pipeline:
+      name: SDP_retail_pipeline
+      configuration:
+        bronze.source_path: /Volumes/retail/bronze/landing
+      libraries:
+        - glob:
+            include: /Workspace/Users/kavyajeetbora@gmail.com/retail_pipeline/transformation/**
+      schema: bronze
+      continuous: false
+      development: false
+      photon: true
+      channel: CURRENT
+      catalog: retail
+      serverless: true
+      event_log:
+        name: audit_sdp_retail_pipeline
+        schema: ops
+        catalog: retail
+      root_path: /Workspace/Users/kavyajeetbora@gmail.com/retail_pipeline

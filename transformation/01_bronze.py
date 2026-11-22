@@ -1,6 +1,9 @@
 from pyspark import pipelines as dp
 from pyspark.sql import functions as F
 
+
+CATALOG = spark.conf.get('catalog')
+SCHEMA = 'bronze'
 source_path = spark.conf.get('bronze.source_path')
 
 sources = {
@@ -9,7 +12,10 @@ sources = {
 }
 
 def create_bronze_table(table_name, source_path):
-    @dp.table(name=table_name, table_properties = {'quality':'bronze', 'pipeline.reset.allowed': 'false'})
+
+    target_table_name = f'{CATALOG}.{SCHEMA}.{table_name}'
+    
+    @dp.table(name=target_table_name, table_properties = {'quality':'bronze', 'pipeline.reset.allowed': 'false'})
     def bronze_customers():
         return (
             spark.readStream.format('cloudFiles')

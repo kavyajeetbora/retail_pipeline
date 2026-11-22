@@ -1,26 +1,18 @@
 from pyspark.sql import functions as F
 from pyspark import pipelines as dp
+from src.retail.gold_aggregates import city_wise_revenue
 
-CATALOG = spark.conf.get('catalog', 'retail')
+CATALOG = spark.conf.get('catalog')
 source_schema = 'silver'
 source_table = 'orders_sdp'
 target_schema = 'gold'
 
 @dp.materialized_view(name=f'{CATALOG}.{target_schema}.city_revenue')
 def calculate_monthly_sales():
-    return (
-        spark.read.table(f'{CATALOG}.{source_schema}.{source_table}').alias('t')
-        .join(
-            spark.read.table(f'{CATALOG}.{source_schema}.customer_sdp').filter(F.col('__END_AT').isNull()).alias('c'),
-            F.col('t.customer_id') == F.col("c.customer_id"),
-            'inner'
-        )
-        .groupBy('c.city').agg(
-            F.sum('t.amount').alias('total_sales')
-        )
-        .select(
-            F.col('c.city').alias('city'),
-            F.col('total_sales')
-        )
-    )
 
+    transaction_df = spark.read.table(f'{CATALOG}.{source_schema}.{source_table}')
+    customer_df = spark.read.table(f'{CATALOG}.{source_schema}.customer_sdp')
+
+    city_df = city_wise_revenue(transaction_df, customer_df)
+
+    return city_df
