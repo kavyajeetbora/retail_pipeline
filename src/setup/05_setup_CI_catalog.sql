@@ -14,3 +14,6 @@ CREATE SCHEMA IF NOT EXISTS gold;
 -- 3. Create Volume / Staging Area
 CREATE VOLUME IF NOT EXISTS bronze.landing;
 
+-- 4. store all test results in this schema
+CREATE SCHEMA IF NOT EXISTS retail_ci.tests;
+
